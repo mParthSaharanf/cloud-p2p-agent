@@ -1,0 +1,84 @@
+services:
+  fileserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.fileserver
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./fileserver/files:/files:z
+
+  tracker:
+    build: .
+    command: uvicorn tracker.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  agent_a:
+    build: .
+    environment:
+      - P2P_TRACKER_URL=http://tracker:8000
+      - P2P_SERVER_PORT=9001
+      - P2P_STORAGE_ROOT=/data/agent_a
+      - P2P_ADVERTISE_HOST=agent_a
+      - P2P_TRUST_ALL=true
+      #- P2P_USE_HTTP_STORAGE=true
+      #- P2P_STORAGE_SERVER_URL=http://fileserver:8001
+      - P2P_USE_DRIVE=true
+      - P2P_DRIVE_TOKEN_PATH=/config/token_agent_a.json
+    ports:
+      - "9001:9001"
+    volumes:
+      - ./config:/config:z
+      - agent_a_data:/data/agent_a
+    depends_on:
+      tracker:
+        condition: service_healthy
+
+  agent_b:
+    build: .
+    environment:
+      - P2P_TRACKER_URL=http://tracker:8000
+      - P2P_SERVER_PORT=9002
+      - P2P_STORAGE_ROOT=/data/agent_b
+      - P2P_ADVERTISE_HOST=agent_b
+      - P2P_TRUST_ALL=true
+      - P2P_USE_DRIVE=true
+      - P2P_DRIVE_TOKEN_PATH=/config/token_agent_b.json
+    ports:
+      - "9002:9002"
+    volumes:
+      - ./config:/config:z
+      - agent_b_data:/data/agent_b
+    depends_on:
+      tracker:
+        condition: service_healthy
+
+  agent_c:
+    build: .
+    environment:
+      - P2P_TRACKER_URL=http://tracker:8000
+      - P2P_SERVER_PORT=9003
+      - P2P_STORAGE_ROOT=/data/agent_c
+      - P2P_ADVERTISE_HOST=agent_c
+      - P2P_TRUST_ALL=true
+      - P2P_USE_DRIVE=true
+      - P2P_DRIVE_TOKEN_PATH=/config/token_agent_b.json
+    ports:
+      - "9003:9003"
+    volumes:
+      - ./config:/config:z
+      - agent_c_data:/data/agent_c
+    depends_on:
+      tracker:
+        condition: service_healthy
+
+volumes:
+  agent_a_data:
+  agent_b_data:
+  agent_c_data:
