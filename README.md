@@ -2,8 +2,6 @@
 
 A decentralized, stateless peer-to-peer file transfer network where agents run in cloud containers and transfer files directly between cloud storage backends — without exposing home IP addresses or consuming home bandwidth.
 
-Built as a systems engineering portfolio project demonstrating: async I/O, network programming, cryptographic trust chains, memory-efficient streaming, and distributed architecture.
-
 ## The Problem
 
 Traditional BitTorrent has three real bottlenecks:
